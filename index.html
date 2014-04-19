@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Tic-Tac-Toe!</title>
+        <script type="text/javascript" src="jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="TicTacToeClient.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" />
+    </head>
+    
+    <body>
+    	<div id="signInContainer">
+    		<div>No nickname associated with this address. Please indicate desired nickname: <input id="newNickField" type="text" /></div>
+    		<input id="submitNickButton" type="button" value="Submit" />
+    	</div>
+    	<div id="matchmakerContainer">
+    		<div>Select another user to play with: </div>
+    		<select>
+    			<option></option>
+    		</select>
+    		<input type="button" value="Play!" />
+    	</div>
+        <div id="gameContainer"></div>
+    </body>
+</html>

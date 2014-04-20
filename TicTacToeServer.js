@@ -147,6 +147,17 @@
         });
     }
 
+    function request_getUserList(request, response) {
+        var addr = request.connection.remoteAddress;
+        var user = getUser(addr);
+        var userList = [];
+        for (key in users) {
+            userList.push(users[key]);
+        }
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify(userList));
+    }
+
     function request_getGrid(request, response) {
         var addr = request.connection.remoteAddress;
         var user = getUser(addr);
@@ -164,11 +175,14 @@
 		
 		//check for CGI call
 		//if (request.method === 'POST') {
-        if (parsedUrl.pathname === '/cgi/getCurrentUser') {
-            request_getCurrentUser(request, response);
-            return;
-        } else if (parsedUrl.pathname === '/cgi/createNewUser') {
-            request_createNewUser(request, response);
+        var cgiResolver = {
+            '/cgi/getCurrentUser': request_getCurrentUser,
+            '/cgi/createNewUser': request_createNewUser,
+            '/cgi/getUserList': request_getUserList
+        };
+        var cgiFunc = cgiResolver[parsedUrl.pathname];
+        if (cgiFunc) {
+            cgiFunc(request, response);
             return;
         }
 			// else {

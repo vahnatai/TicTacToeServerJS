@@ -25,6 +25,11 @@ body {
 	display: none;
 }
 
+#usernameGreetSpan {
+	font-weight: bold;
+	text-decoration: underline;
+}
+
 #gameContainer {
 	width: 98%;
 	height: 98%;

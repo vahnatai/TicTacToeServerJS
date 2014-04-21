@@ -6,7 +6,17 @@
 	var querystring = require('querystring');
 	
     var users = {}; // {ip: user}
+    var challenges = [];
     var games = [];
+
+    /**
+     *	Implements a challenge from one user to another. If accepted, a game is created.
+     */
+    function Challenge(challenger, target) {
+    	this.challenger = challenger;
+    	this.target = target;
+    	this.time = new Date().getTime();
+    }
 
     /**
      *  Implements a Game with a naughts player and a crosses player.
@@ -150,12 +160,8 @@
     function request_getUserList(request, response) {
         var addr = request.connection.remoteAddress;
         var user = getUser(addr);
-        var userList = [];
-        for (key in users) {
-            userList.push(users[key]);
-        }
         response.setHeader('content-type', 'application/json');
-        response.end(JSON.stringify(userList));
+        response.end(JSON.stringify(users));
     }
 
     function request_getGrid(request, response) {
@@ -163,6 +169,38 @@
         var user = getUser(addr);
         response.setHeader('content-type', 'application/json');
         response.end(JSON.stringify({user: user}));
+    }
+
+    function request_issueChallenge(request, response) {
+    	var body = '';
+        request.on('data', function(data) {
+            body += data;
+        });
+        request.on('end', function() {
+            var targetAddr = JSON.parse(body);
+            var addr = request.connection.remoteAddress;
+		    var challenger = getUser(addr);
+		    var target = getUser(targetAddr);
+		    var challenge = new Challenge(challenger, target);
+		    challenges.push(challenge);
+		    response.setHeader('content-type', 'application/json');
+		    response.end(JSON.stringify(challenge));
+        });
+    }
+
+    function request_getChallenge(request, response) {
+	    var addr = request.connection.remoteAddress;
+	    var user = getUser(addr);
+	    var myChallenge = null;
+	    for (i in challenges) {
+	    	var challenge = challenges[i];
+	    	if (challenge.target === user) {
+	    		myChallenge = challenge;
+	    		break;
+	    	}
+	    }
+	    response.setHeader('content-type', 'application/json');
+	    response.end(JSON.stringify(myChallenge));
     }
     
 	var server = http.createServer(function (request, response) {
@@ -178,7 +216,9 @@
         var cgiResolver = {
             '/cgi/getCurrentUser': request_getCurrentUser,
             '/cgi/createNewUser': request_createNewUser,
-            '/cgi/getUserList': request_getUserList
+            '/cgi/getUserList': request_getUserList,
+            '/cgi/issueChallenge': request_issueChallenge,
+            '/cgi/getChallenge': request_getChallenge
         };
         var cgiFunc = cgiResolver[parsedUrl.pathname];
         if (cgiFunc) {

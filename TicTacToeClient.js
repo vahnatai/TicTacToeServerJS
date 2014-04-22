@@ -56,12 +56,21 @@
     }
 
     function getChallenge(successCallback) {
-    	$.ajax({
-			type: 'POST',
-			url: './cgi/getChallenge',
-			success: successCallback,
-			error: console.error
-		});
+        $.ajax({
+            type: 'POST',
+            url: './cgi/getChallenge',
+            success: successCallback,
+            error: console.error
+        });
+    }
+
+    function rejectChallenge(successCallback) {
+        $.ajax({
+            type: 'POST',
+            url: './cgi/rejectChallenge',
+            success: successCallback,
+            error: console.error
+        });
     }
 
     function submitNickname() {

@@ -202,6 +202,10 @@
 	    response.setHeader('content-type', 'application/json');
 	    response.end(JSON.stringify(myChallenge));
     }
+
+    function request_rejectChallenge(request, response) {
+
+    }
     
 	var server = http.createServer(function (request, response) {
 		var parsedUrl = url.parse(request.url);
@@ -218,7 +222,8 @@
             '/cgi/createNewUser': request_createNewUser,
             '/cgi/getUserList': request_getUserList,
             '/cgi/issueChallenge': request_issueChallenge,
-            '/cgi/getChallenge': request_getChallenge
+            '/cgi/getChallenge': request_getChallenge,
+            '/cgi/rejectChallenge': request_rejectChallenge
         };
         var cgiFunc = cgiResolver[parsedUrl.pathname];
         if (cgiFunc) {
@@ -255,7 +260,6 @@
 			} else {
 				contentType = 'text/plain';
 			}
-			
 			response.setHeader('content-type', contentType);
 			response.end(data);
 		});

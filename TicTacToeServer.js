@@ -34,13 +34,6 @@
         if (!crossesPlayer) {
             throw 'Cannot create game: crosses(exes) player is not specified.';
         }
-        if (naughtsPlayer.isPlaying() && crossesPlayer.isPlaying()) {
-            throw 'Cannot create game: both of the specified players are already playing other games.';
-        } else if (naughtsPlayer.isPlaying()) {
-            throw 'Cannot create game: specified naughts(oes) player "' + naughtsPlayer.nickname + '" is already playing another game.';
-        } else if (crossesPlayer.isPlaying()) {
-            throw 'Cannot create game: specified crosses(exes) player "' + crossesPlayer.nickname + '" is already playing another game.';
-        }
 
         this.naughtsPlayer = naughtsPlayer;
         this.crossesPlayer = crossesPlayer;
@@ -228,6 +221,14 @@
 		    }
 		    var game = null;
 		    if (result) {
+		    	var naughtsPlayer, crossesPlayer;
+		    	if (Math.round(Math.random() * 100) % 2) {
+		    		naughtsPlayer = acceptedChallenge.target;
+		    		crossesPlayer = acceptedChallenge.challenger;
+		    	} else {
+		    		naughtsPlayer = acceptedChallenge.challenger;
+		    		crossesPlayer = acceptedChallenge.target;
+		    	}
 			    game = new Game(naughtsPlayer, crossesPlayer);
 	        	games.push(game);
 	        }

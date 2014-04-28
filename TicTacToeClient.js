@@ -121,6 +121,7 @@
 						if (!newGame) {
 							//failure
 						}
+						myGames.push(newGame);
 					});
 				} else {
 					rejectChallenge(challenge, function(rejectedChallenge) {

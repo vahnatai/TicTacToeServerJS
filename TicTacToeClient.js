@@ -1,7 +1,8 @@
 //(function() {
     var currentUser;
-    var gameGrid;
+    var myGames = [];
     var updateInterval;
+
     
 	/**
 	 *	Via AJAX, get the current user for this address, if exists.
@@ -64,10 +65,23 @@
         });
     }
 
-    function rejectChallenge(successCallback) {
+    function acceptChallenge(challenge, successCallback) {
+        $.ajax({
+            type: 'POST',
+            url: './cgi/acceptChallenge',
+            dataType: 'json',
+            data: JSON.stringify(challenge),
+            success: successCallback,
+            error: console.error
+        });
+    }
+
+    function rejectChallenge(challenge, successCallback) {
         $.ajax({
             type: 'POST',
             url: './cgi/rejectChallenge',
+            dataType: 'json',
+            data: JSON.stringify(challenge),
             success: successCallback,
             error: console.error
         });
@@ -103,9 +117,17 @@
         getChallenge(function(challenge) {
 			if (challenge) {
 				if (confirm('User ' + challenge.challenger + ' has challenged you! Accept?')) {
-
+					acceptChallenge(challenge, function(newGame) {
+						if (!newGame) {
+							//failure
+						}
+					});
 				} else {
-					
+					rejectChallenge(challenge, function(rejectedChallenge) {
+						if (!rejectedChallenge) {
+							//failure
+						}
+					});
 				}
 			}
         });
@@ -120,6 +142,7 @@
                 return false;
             }
         });
+        $('#newNickField').focus();
         $('#matchmakerContainer').hide();
         $('#playButton').unbind();
         $('#gameContainer').hide();

@@ -7,21 +7,41 @@
 	
     var users = {}; // {ip: user}
     var challenges = [];
+    var rejectedChallenges = [];
     var games = [];
 
     /**
      *	Implements a challenge from one user to another. If accepted, a game is created.
      */
     function Challenge(challenger, target) {
+    	this.id = Challenge.newId();
     	this.challenger = challenger;
     	this.target = target;
     	this.time = new Date().getTime();
+    }
+    Challenge.lastId = 0;
+    Challenge.newId = function newId() {
+    	return Challenge.lastId++;
     }
 
     /**
      *  Implements a Game with a naughts player and a crosses player.
      */
     function Game(naughtsPlayer, crossesPlayer) {
+		if (!naughtsPlayer) {
+            throw 'Cannot create game: naughts(oes) player is not specified.';
+        }
+        if (!crossesPlayer) {
+            throw 'Cannot create game: crosses(exes) player is not specified.';
+        }
+        if (naughtsPlayer.isPlaying() && crossesPlayer.isPlaying()) {
+            throw 'Cannot create game: both of the specified players are already playing other games.';
+        } else if (naughtsPlayer.isPlaying()) {
+            throw 'Cannot create game: specified naughts(oes) player "' + naughtsPlayer.nickname + '" is already playing another game.';
+        } else if (crossesPlayer.isPlaying()) {
+            throw 'Cannot create game: specified crosses(exes) player "' + crossesPlayer.nickname + '" is already playing another game.';
+        }
+
         this.naughtsPlayer = naughtsPlayer;
         this.crossesPlayer = crossesPlayer;
         this.grid = [
@@ -70,24 +90,6 @@
         this.activeGameID = null;
         this.losses++;
     };
-
-    function createNewGame(naughtsPlayer, crossesPlayer) {
-        if (!naughtsPlayer) {
-            throw 'Cannot create game: naughts(oes) player is not specified.';
-        }
-        if (!crossesPlayer) {
-            throw 'Cannot create game: crosses(exes) player is not specified.';
-        }
-        if (naughtsPlayer.isPlaying() && crossesPlayer.isPlaying()) {
-            throw 'Cannot create game: both of the specified players are already playing other games.';
-        } else if (naughtsPlayer.isPlaying()) {
-            throw 'Cannot create game: specified naughts(oes) player "' + naughtsPlayer.nickname + '" is already playing another game.';
-        } else if (crossesPlayer.isPlaying()) {
-            throw 'Cannot create game: specified crosses(exes) player "' + crossesPlayer.nickname + '" is already playing another game.';
-        }
-        var game = new Game(naughtsPlayer, crossesPlayer);
-        games.push(game);
-    }
     
     function addUser(username, address) {
         if (users[address]) {
@@ -203,8 +205,62 @@
 	    response.end(JSON.stringify(myChallenge));
     }
 
-    function request_rejectChallenge(request, response) {
+    function request_acceptChallenge(request, response) {
+    	var body = '';
+        request.on('data', function(data) {
+            body += data;
+        });
+        request.on('end', function() {
+            var acceptedChallenge = JSON.parse(body);
+		    var accepter = getUser(request.connection.remoteAddress);
+		    var result = null;
+		    for (i in challenges) {
+		    	var challenge = challenges[i];
+		    	if (challenge.id === acceptedChallenge.id) {
+		    		if (challenge.target !== accepter) {
+		    			console.error("Accepter " + accepter + " attempting to accept challenge for " + challenge.target);
+		    			break;
+		    		}
+	    			result = challenges[i];
+	    			delete challenges[i];
+	    			break;
+		    	}
+		    }
+		    var game = null;
+		    if (result) {
+			    game = new Game(naughtsPlayer, crossesPlayer);
+	        	games.push(game);
+	        }
+        	response.setHeader('content-type', 'application/json');
+		    response.end(JSON.stringify(game));
+        });
+    }
 
+    function request_rejectChallenge(request, response) {
+    	var body = '';
+        request.on('data', function(data) {
+            body += data;
+        });
+        request.on('end', function() {
+            var rejectedChallenge = JSON.parse(body);
+		    var rejecter = getUser(request.connection.remoteAddress);
+		    var result = null;
+		    for (i in challenges) {
+		    	var challenge = challenges[i];
+		    	if (challenge.id === rejectedChallenge.id) {
+		    		if (challenge.target !== rejecter) {
+		    			console.error("Rejecter " + rejecter + " attempting to reject challenge for " + challenge.target);
+		    			break;
+		    		}
+	    			result = challenges[i];
+	    			delete challenges[i];
+	    			rejectedChallenges.push(result);
+	    			break;
+		    	}
+		    }
+        	response.setHeader('content-type', 'application/json');
+		    response.end(JSON.stringify(result));
+        });
     }
     
 	var server = http.createServer(function (request, response) {
@@ -223,6 +279,7 @@
             '/cgi/getUserList': request_getUserList,
             '/cgi/issueChallenge': request_issueChallenge,
             '/cgi/getChallenge': request_getChallenge,
+            '/cgi/acceptChallenge': request_acceptChallenge,
             '/cgi/rejectChallenge': request_rejectChallenge
         };
         var cgiFunc = cgiResolver[parsedUrl.pathname];

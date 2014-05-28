@@ -2,7 +2,6 @@
     var currentUser;
     var myGames = [];
     var updateInterval;
-
     
 	/**
 	 *	Via AJAX, get the current user for this address, if exists.
@@ -134,6 +133,18 @@
         });
     }
 
+    function renderGame(game, $container) {
+        $container.empty();
+        for (row in game.grid) {
+            var $row = $('<div class="gameRow">');
+            for (col in game.grid[0]) {
+                var cell = $('<div class="gameCell">').text(game.grid[row][col] || '_');
+                $row.append(cell);
+            }
+            $container.append($row);
+        }
+    }
+
     function showSignIn() {
         $('#signInContainer').show();
         $('#submitNickButton').click(submitNickname);
@@ -164,7 +175,7 @@
         updateInterval = setInterval(populateMatchmaker, 200);
     }
 
-    function showGame() {
+    function showGame(tabNumber) {
         $('#signInContainer').hide();
         $('#submitNickButton').unbind();
         $('#newNickField').unbind();

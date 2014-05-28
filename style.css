@@ -33,5 +33,17 @@ body {
 #gameContainer {
 	width: 98%;
 	height: 98%;
-	display: none;
+	display: table;
+	border-collapse: collapse;
+}
+
+.gameRow {
+	display: table-row;
+}
+
+.gameCell {
+	display: table-cell;
+	width: 100px;
+	height: 100px;
+	border: thin solid gray;
 }

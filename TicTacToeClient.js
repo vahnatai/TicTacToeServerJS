@@ -110,7 +110,7 @@
             var $mm = $('#matchmakerSelect');
             $mm.empty();
             for (key in users) {
-                $mm.append($('<option>').val(key).text(users[key]));
+                $mm.append($('<option>').val(users[key]).text(users[key]));
             }
         }, console.error);
         getChallenge(function(challenge) {

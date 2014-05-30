@@ -30,7 +30,22 @@ body {
 	text-decoration: underline;
 }
 
-#gameContainer {
+#tabBar {
+
+}
+
+.tabControl {
+	display: inline-block;
+	border-top: thin solid gray;
+	border-left: thin solid gray;
+	cursor: pointer;
+}
+
+.tabControl:hover {
+	background-color: rgba(100, 100, 100, 100);
+}
+
+.gameContainer {
 	width: 98%;
 	height: 98%;
 	display: table;

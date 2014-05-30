@@ -116,19 +116,19 @@ requirejs(
         });
     }
 
-    function request_getChallenge(request, response) {
+    function request_getChallenges(request, response) {
 	    var username = request.session.username;
 	    var user = getUser(username);
-	    var myChallenge = null;
-	    for (i in challenges) {
-	    	var challenge = challenges[i];
+	    var myChallenges = {
+            pending: []
+        };
+        challenges.forEach(function (challenge) {
 	    	if (challenge.target === user.nickname) {
-	    		myChallenge = challenge;
-	    		break;
+	    		myChallenges.pending.push(challenge);
 	    	}
-	    }
+	    });
 	    response.setHeader('content-type', 'application/json');
-	    response.end(JSON.stringify(myChallenge));
+	    response.end(JSON.stringify(myChallenges));
     }
 
     function request_acceptChallenge(request, response) {
@@ -144,11 +144,12 @@ requirejs(
 		    	var challenge = challenges[i];
 		    	if (challenge.id === acceptedChallenge.id) {
 		    		if (challenge.target !== accepter.nickname) {
-		    			console.error("Accepter " + accepter + " attempting to accept challenge for " + challenge.target);
+		    			console.error("Accepter " + accepter.nickname + " attempting to accept challenge for " + challenge.target);
 		    			break;
 		    		}
 	    			result = challenges[i];
 	    			delete challenges[i];
+                    console.log("User " + accepter.nickname + " ACCEPT " + challenge.challenger);
 	    			break;
 		    	}
 		    }
@@ -190,6 +191,7 @@ requirejs(
 	    			result = challenges[i];
 	    			delete challenges[i];
 	    			rejectedChallenges.push(result);
+                    console.log("User " +  rejecter.nickname + " REJECT " + challenge.challenger);
 	    			break;
 		    	}
 		    }
@@ -203,7 +205,7 @@ requirejs(
         '/cgi/createNewUser': request_createNewUser,
         '/cgi/getUserList': request_getUserList,
         '/cgi/issueChallenge': request_issueChallenge,
-        '/cgi/getChallenge': request_getChallenge,
+        '/cgi/getChallenges': request_getChallenges,
         '/cgi/acceptChallenge': request_acceptChallenge,
         '/cgi/rejectChallenge': request_rejectChallenge
     };

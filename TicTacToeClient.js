@@ -55,10 +55,10 @@
     	}
     }
 
-    function getChallenge(successCallback) {
+    function getChallenges(successCallback) {
         $.ajax({
             type: 'POST',
-            url: './cgi/getChallenge',
+            url: './cgi/getChallenges',
             success: successCallback,
             error: console.error
         });
@@ -108,28 +108,52 @@
     function populateMatchmaker() {
         getUserList(function success(users) {
             var $mm = $('#matchmakerSelect');
+            var oldVal = $mm.val();
             $mm.empty();
             for (key in users) {
                 $mm.append($('<option>').val(users[key]).text(users[key]));
             }
+            if (oldVal) {
+                $mm.val(oldVal);
+            }
         }, console.error);
-        getChallenge(function(challenge) {
-			if (challenge) {
-				if (confirm('User ' + challenge.challenger + ' has challenged you! Accept?')) {
-					acceptChallenge(challenge, function(newGame) {
-						if (!newGame) {
-							//failure
-						}
-						myGames.push(newGame);
-					});
-				} else {
-					rejectChallenge(challenge, function(rejectedChallenge) {
-						if (!rejectedChallenge) {
-							//failure
-						}
-					});
-				}
-			}
+        getChallenges(function(challenges) {
+            challenges.pending.forEach(function (challenge) {
+    			if (challenge) {
+    				if (confirm('User ' + challenge.challenger + ' has challenged you! Accept?')) {
+    					acceptChallenge(challenge, function(newGame) {
+    						if (!newGame) {
+    							//failure
+    						}
+    						myGames.push(newGame);
+                            populateTabBar(myGames);
+                            showGame();
+    					});
+    				} else {
+    					rejectChallenge(challenge, function(rejectedChallenge) {
+    						if (!rejectedChallenge) {
+    							//failure
+    						}
+    					});
+    				}
+    			}
+            });
+        });
+    }
+
+    function populateTabBar(games) {
+        var $tabBar = $('#tabBar');
+        $tabBar.empty();
+        games.forEach(function (game) {
+            var opponent;
+            if (game.naughtsPlayer === currentUser) {
+                opponent = game.crossesPlayer;
+            } else {
+                opponent = game.naughtsPlayer;
+            }
+            var $newTab = $('<div class="tabControl">').text(opponent).attr('id', 'tabControl-' + game.id);
+            $newTab.click(function(){alert(this.id.split('-')[1])});
+            $tabBar.append($newTab);
         });
     }
 
@@ -138,8 +162,8 @@
         for (row in game.grid) {
             var $row = $('<div class="gameRow">');
             for (col in game.grid[0]) {
-                var cell = $('<div class="gameCell">').text(game.grid[row][col] || '_');
-                $row.append(cell);
+                var $cell = $('<div class="gameCell">').text(game.grid[row][col] || '_');
+                $row.append($cell);
             }
             $container.append($row);
         }
@@ -172,7 +196,7 @@
 
         populateMatchmaker();
         clearInterval(updateInterval);
-        updateInterval = setInterval(populateMatchmaker, 200);
+        updateInterval = setInterval(populateMatchmaker, 2000);
     }
 
     function showGame(tabNumber) {

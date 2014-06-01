@@ -67,16 +67,17 @@ define(function () {
         return this;
     };
     User.jsonReviver = function (key, value) {
-        var user = new User(null); 
-        var type;
-        if (value && typeof value === 'object') {
-            type = value.type;
-            console.log(value);
-            if (typeof type === 'string' && typeof window[type] === 'function') {
-                return new (window[type])(value);
+        if (!value.hasOwnProperty('className') || value['className'] !== 'User') {
+            console.error('Tried to revive User from non-User JSON string.');
+            return null;
+        }
+        var user = new User(null);
+        for (attr in value) {
+            if (attr !== 'className') {
+                user[attr] = value[attr];
             }
         }
-        return value;
+        return user;
     };
     User.parseJSON = function parseJSON(jsonString) {
         var user = JSON.parse(jsonString, User.jsonReviver);
@@ -124,6 +125,29 @@ define(function () {
         }
         this.grid[row][column] = (player === this.naughtsPlayer ? 'O' : 'X');
     }
+    Game.prototype.hasPlayer = function hasPlayer(username) {
+        return (this.naughtsPlayer === username || this.crossesPlayer === username);
+    };
+    Game.prototype.toJSON = function toJSON() {
+        this.className = this.constructor.name;
+        return this;
+    };
+    Game.jsonReviver = function (key, value) {
+        if (!value.hasOwnProperty('className') || value['className'] !== 'Game') {
+            console.error('Tried to revive Game from non-Game JSON string.');
+            return null;
+        }
+        var game = new Game(null, null);
+        for (attr in value) {
+            if (attr !== 'className') {
+                game[attr] = value[attr];
+            }
+        }
+        return game;
+    };
+    Game.parseJSON = function parseJSON(jsonString) {
+        var user = JSON.parse(jsonString, Game.jsonReviver);
+    };
     tictactoe.model.Game = Game;
 
 

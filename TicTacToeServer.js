@@ -11,7 +11,7 @@ requirejs(
     var challenges = [];
     var rejectedChallenges = [];
     var acceptedChallenges = [];
-    var games = [];
+    var games = {}; // {id: game}
 
     function addUser(username) {
         if (users[username]) {
@@ -20,7 +20,7 @@ requirejs(
         }
         var user = users[username] = new tictactoe.model.User(username);
         saveUsers();
-        return username;
+        return user;
     }
     
     function removeUser(username) {
@@ -38,6 +38,16 @@ requirejs(
         }
         return null;
     }
+
+    function getCurrentUser(request) {
+        var username = request.session.username || null;
+        var user = getUser(username);
+        if (!user) {
+            user = null;
+            delete request.session.username;
+        }
+        return user;
+    }
     
     function saveUsers() {
         fs.writeFile('./users.json', JSON.stringify(users, null, 4), function(error) {
@@ -47,15 +57,18 @@ requirejs(
         });
     }
     
-    function request_getCurrentUser(request, response) {
-        var username = request.session.username || null;
-        var user;
-        user = getUser(username);
-        if (!user) {
-            username = request.session.username = null;
+    function getPlayerGame(user, gameId) {
+        var game = games[gameId];
+        if (!user || !game.hasPlayer(user.nickname)) {
+            game = null;
         }
+        return game;
+    }
+
+    function request_getCurrentUser(request, response) {
+        var user = getCurrentUser(request);
         response.setHeader('content-type', 'application/json');
-        response.end(JSON.stringify({user: username}));
+        response.end(JSON.stringify({user: user}));
     }
 	
     function request_createNewUser(request, response) {
@@ -68,16 +81,17 @@ requirejs(
             info = JSON.parse(body);
             
             var result;
-            if (addUser(info.username)) {
+            var user = addUser(info.username);
+            if (user) {
                 result = {
                     success: true,
-                    username: info.username
+                    user: user
                 };
-                request.session.username = info.username;
+                request.session.username = user.nickname;
             } else {
                 result = {
                     success: false,
-                    error: 'User already exists for this address.'
+                    error: 'User could not be created.'
                 };
             }
             response.setHeader('content-type', 'application/json');
@@ -92,6 +106,10 @@ requirejs(
         response.setHeader('content-type', 'application/json');
         response.end(JSON.stringify(Object.keys(users)));
     }
+
+
+
+
 
     function request_getGrid(request, response) {
         var username = request.session.username;
@@ -159,7 +177,7 @@ requirejs(
         });
         request.on('end', function() {
             var acceptedChallenge = JSON.parse(body);
-		    var accepter = getUser(request.session.username);
+		    var accepter = getCurrentUser(request);
 		    var result = null;
 		    for (i in challenges) {
 		    	var challenge = challenges[i];
@@ -188,7 +206,7 @@ requirejs(
 		    		crossesPlayer = acceptedChallenge.target;
 		    	}
 			    game = new tictactoe.model.Game(naughtsPlayer, crossesPlayer);
-	        	games.push(game);
+	        	games[game.id] = game;
                 result.gameId = game.id;
 	        }
         	response.setHeader('content-type', 'application/json');
@@ -204,7 +222,7 @@ requirejs(
         });
         request.on('end', function() {
             var rejectedChallenge = JSON.parse(body);
-		    var rejecter = getUser(request.session.username);
+		    var rejecter = getCurrentUser(request);
 		    var result = null;
 		    for (i in challenges) {
 		    	var challenge = challenges[i];
@@ -225,6 +243,33 @@ requirejs(
         });
     }
 
+    function request_getGameIds(request, response) {
+        var gameIds = [];
+        var user = getCurrentUser(request);
+        games.forEach(function (game, i) {
+            if (game && game.hasPlayer(user.nickname)) {
+                gameIds.push(game.id);
+            }
+        });
+
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify(gameIds));
+    }
+
+    function request_getGame(request, response) {
+        var user = getCurrentUser(request);
+        var body = '';
+        request.on('data', function(data) {
+            body += data;
+        });
+        request.on('end', function() {
+            var gameId = JSON.parse(body);
+            var game = getPlayerGame(user, gameId);
+            response.setHeader('content-type', 'application/json');
+            response.end(JSON.stringify(game));
+        });
+    }
+
     var cgiResolver = {
         '/cgi/getCurrentUser': request_getCurrentUser,
         '/cgi/createNewUser': request_createNewUser,
@@ -232,7 +277,9 @@ requirejs(
         '/cgi/issueChallenge': request_issueChallenge,
         '/cgi/getChallenges': request_getChallenges,
         '/cgi/acceptChallenge': request_acceptChallenge,
-        '/cgi/rejectChallenge': request_rejectChallenge
+        '/cgi/rejectChallenge': request_rejectChallenge,
+        '/cgi/getGameIds': request_getGameIds,
+        '/cgi/getGame': request_getGame
     };
 
     var ONE_HOUR = 60 * 60 * 1000;

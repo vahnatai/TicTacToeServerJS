@@ -1,5 +1,6 @@
 //(function() {
     var currentUser;
+    var currentGame;
     var myGames = [];
     var updateInterval;
     
@@ -86,6 +87,26 @@
         });
     }
 
+    function getGameIds(successCallback) {
+        $.ajax({
+            type: 'POST',
+            url: './cgi/getGameIds',
+            success: successCallback,
+            error: console.error
+        });
+    }
+
+    function getGame(gameId, successCallback) {
+        $.ajax({
+            type: 'POST',
+            url: './cgi/getGameIds',
+            dataType: 'json',
+            data: JSON.stringify(gameId),
+            success: successCallback,
+            error: console.error
+        });
+    }
+
     function submitNickname() {
         if (currentUser) {
             throw 'Current user already defined.';
@@ -98,7 +119,7 @@
             return;
         }
         createNewUser(desiredName, function success(data) {
-            currentUser = data.username;
+            currentUser = data.user;
             showMatchmaker();
         }, function fail(request, status, error) {
             throw error;
@@ -231,12 +252,12 @@
     }
 
 	$(document).ready(function() {
-        // get an old username by IP or create a new username 
-        getCurrentUser(function(username) {
-            if (!username) {
+        // get user from session or create a new user
+        getCurrentUser(function(user) {
+            if (!user) {
                 showSignIn();
             } else {
-                currentUser = username;
+                currentUser = user;
                 showMatchmaker();
             }
         });

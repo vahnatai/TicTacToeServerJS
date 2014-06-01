@@ -40,7 +40,7 @@ requirejs(
     }
     
     function saveUsers() {
-        fs.writeFile('./users.json', JSON.stringify(users), function(error) {
+        fs.writeFile('./users.json', JSON.stringify(users, null, 4), function(error) {
             if (error) {
                 console.error('I/O error: ', error);
             }

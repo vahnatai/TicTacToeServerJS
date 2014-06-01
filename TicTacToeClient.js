@@ -117,28 +117,49 @@
                 $mm.val(oldVal);
             }
         }, console.error);
+
+        //check for pending challenges against you
         getChallenges(function(challenges) {
             challenges.pending.forEach(function (challenge) {
-    			if (challenge) {
-    				if (confirm('User ' + challenge.challenger + ' has challenged you! Accept?')) {
-    					acceptChallenge(challenge, function(newGame) {
-    						if (!newGame) {
-    							//failure
-    						}
-    						myGames.push(newGame);
+                if (challenge) {
+                    if (confirm('User ' + challenge.challenger + ' has challenged you! Accept?')) {
+                        acceptChallenge(challenge, function(newGame) {
+                            if (!newGame) {
+                                //failure
+                            }
+                            myGames.push(newGame);
                             populateTabBar(myGames);
                             showGame();
-    					});
-    				} else {
-    					rejectChallenge(challenge, function(rejectedChallenge) {
-    						if (!rejectedChallenge) {
-    							//failure
-    						}
-    					});
-    				}
-    			}
+                        });
+                    } else {
+                        rejectChallenge(challenge, function(rejectedChallenge) {
+                            if (!rejectedChallenge) {
+                                //failure
+                            }
+                        });
+                    }
+                }
+            });
+
+            //check for accepted challenges you've made
+            challenges.accepted.forEach(function (challenge) {
+                if (challenge) {
+                    alert('User ' + challenge.target + ' has accepted your challenge!');
+                    // TODO update games list
+                    populateTabBar(myGames);
+                    showGame();
+                }
+            });
+
+            //check for rejected challenges you've made
+            challenges.rejected.forEach(function (challenge) {
+                if (challenge) {
+                    alert('User ' + challenge.target + ' has rejected your challenge!');
+                }
             });
         });
+
+        
     }
 
     function populateTabBar(games) {

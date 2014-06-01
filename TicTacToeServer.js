@@ -4,12 +4,13 @@ requirejs.config({
     nodeRequire: require
 });
 requirejs(
-    ['http', 'path', 'url', 'fs', 'querystring', 'connect', './model'],
-    function(http, path, url, fs, querystring, connect, model) {
+    ['http', 'path', 'url', 'fs', 'querystring', 'connect', './tictactoe.js'],
+    function(http, path, url, fs, querystring, connect, tictactoe) {
 	
     var users = {}; // {nick: user}
     var challenges = [];
     var rejectedChallenges = [];
+    var acceptedChallenges = [];
     var games = [];
 
     function addUser(username) {
@@ -17,7 +18,7 @@ requirejs(
             console.error('User ' + username + ' already exists.');
             return null;
         }
-        var user = users[username] = new model.User(username);
+        var user = users[username] = new tictactoe.model.User(username);
         saveUsers();
         return username;
     }
@@ -109,7 +110,7 @@ requirejs(
             var username = request.session.username;
 		    var challenger = getUser(username);
 		    var target = getUser(targetUsername);
-		    var challenge = new model.Challenge(challenger.nickname, target.nickname);
+		    var challenge = new tictactoe.model.Challenge(challenger.nickname, target.nickname);
 		    challenges.push(challenge);
 		    response.setHeader('content-type', 'application/json');
 		    response.end(JSON.stringify(challenge));
@@ -120,13 +121,33 @@ requirejs(
 	    var username = request.session.username;
 	    var user = getUser(username);
 	    var myChallenges = {
-            pending: []
+            pending: [],
+            accepted: [],
+            rejected: []
         };
-        challenges.forEach(function (challenge) {
+        //pending
+        challenges.forEach(function (challenge, i) {
 	    	if (challenge.target === user.nickname) {
 	    		myChallenges.pending.push(challenge);
 	    	}
 	    });
+
+        //accepted
+        acceptedChallenges.forEach(function (challenge, i) {
+            if (challenge.challenger === user.nickname) {
+                myChallenges.accepted.push(challenge);
+                acceptedChallenges.splice(i, 1);
+            }
+        });
+
+        //rejected
+        rejectedChallenges.forEach(function (challenge, i) {
+            if (challenge.challenger === user.nickname) {
+                myChallenges.rejected.push(challenge);
+                rejectedChallenges.splice(i, 1);
+            }
+        });
+
 	    response.setHeader('content-type', 'application/json');
 	    response.end(JSON.stringify(myChallenges));
     }
@@ -149,10 +170,13 @@ requirejs(
 		    		}
 	    			result = challenges[i];
 	    			delete challenges[i];
+                    acceptedChallenges.push(result);
                     console.log("User " + accepter.nickname + " ACCEPT " + challenge.challenger);
 	    			break;
 		    	}
 		    }
+
+            //init game instance
 		    var game = null;
 		    if (result) {
 		    	var naughtsPlayer, crossesPlayer;
@@ -163,8 +187,9 @@ requirejs(
 		    		naughtsPlayer = acceptedChallenge.challenger;
 		    		crossesPlayer = acceptedChallenge.target;
 		    	}
-			    game = new model.Game(naughtsPlayer, crossesPlayer);
+			    game = new tictactoe.model.Game(naughtsPlayer, crossesPlayer);
 	        	games.push(game);
+                result.gameId = game.id;
 	        }
         	response.setHeader('content-type', 'application/json');
 		    response.end(JSON.stringify(game));
@@ -216,8 +241,10 @@ requirejs(
         .use(connect.static('./'))
         .use(connect.cookieParser())
         .use(connect.cookieSession({
-            secret: 'nyan-nyan-nyan!',  //use cookie to store session data using secret key
-            cookie: { maxAge: ONE_HOUR}
+            secret: 'nyan-nyan-nyan!',  //use cookie to store session data in request.session using secret
+            cookie: {
+                maxAge: ONE_HOUR
+            }
         }))
         .use(function (request, response){
             var parsedUrl = url.parse(request.url);

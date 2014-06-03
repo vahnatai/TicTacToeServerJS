@@ -243,31 +243,17 @@ requirejs(
         });
     }
 
-    function request_getGameIds(request, response) {
-        var gameIds = [];
+    function request_getGames(request, response) {
+        var myGames = [];
         var user = getCurrentUser(request);
-        games.forEach(function (game, i) {
+        for (id in games) {
+            var game = games[id];
             if (game && game.hasPlayer(user.nickname)) {
-                gameIds.push(game.id);
+                myGames.push(game);
             }
-        });
-
+        }
         response.setHeader('content-type', 'application/json');
-        response.end(JSON.stringify(gameIds));
-    }
-
-    function request_getGame(request, response) {
-        var user = getCurrentUser(request);
-        var body = '';
-        request.on('data', function(data) {
-            body += data;
-        });
-        request.on('end', function() {
-            var gameId = JSON.parse(body);
-            var game = getPlayerGame(user, gameId);
-            response.setHeader('content-type', 'application/json');
-            response.end(JSON.stringify(game));
-        });
+        response.end(JSON.stringify(myGames));
     }
 
     var cgiResolver = {
@@ -278,8 +264,7 @@ requirejs(
         '/cgi/getChallenges': request_getChallenges,
         '/cgi/acceptChallenge': request_acceptChallenge,
         '/cgi/rejectChallenge': request_rejectChallenge,
-        '/cgi/getGameIds': request_getGameIds,
-        '/cgi/getGame': request_getGame
+        '/cgi/getGames': request_getGames
     };
 
     var ONE_HOUR = 60 * 60 * 1000;

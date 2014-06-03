@@ -12,16 +12,18 @@
     		<div>No nickname associated with this address. Please indicate desired nickname: <input id="newNickField" type="text" /></div>
     		<input id="submitNickButton" type="button" value="Submit" />
     	</div>
-    	<div id="matchmakerContainer">
-    		<div>Hi <span id="usernameGreetSpan">USER</span>! Select another user to play with: </div>
-    		<select id="matchmakerSelect">
-    			<option></option>
-    		</select>
-    		<input id="playButton" type="button" value="Play!" />
-    	</div>
+    	
         <div id="gameTabsContainer">
             <div id="tabBar">
-              <!-- <div class="tabControl">Game 1</div> --> 
+              <div class="tabControl" id="matchmakerTabControl">Matchmaker</div>
+              <div class="tabControl">Game 1</div>
+            </div>
+            <div class="gameTab" id="matchmakerTab">
+                <div>Hi <span id="usernameGreetSpan">USER</span>! Select another user to play with: </div>
+                <select id="matchmakerSelect">
+                    <option></option>
+                </select>
+                <input id="playButton" type="button" value="Play!" />
             </div>
             <div class="gameTab">
                 <div class="gameContainer"></div>

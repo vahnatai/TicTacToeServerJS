@@ -87,21 +87,10 @@
         });
     }
 
-    function getGameIds(successCallback) {
+    function getGames(successCallback) {
         $.ajax({
             type: 'POST',
-            url: './cgi/getGameIds',
-            success: successCallback,
-            error: console.error
-        });
-    }
-
-    function getGame(gameId, successCallback) {
-        $.ajax({
-            type: 'POST',
-            url: './cgi/getGameIds',
-            dataType: 'json',
-            data: JSON.stringify(gameId),
+            url: './cgi/getGames',
             success: successCallback,
             error: console.error
         });
@@ -120,7 +109,7 @@
         }
         createNewUser(desiredName, function success(data) {
             currentUser = data.user;
-            showMatchmaker();
+            showTabs();
         }, function fail(request, status, error) {
             throw error;
         });
@@ -148,9 +137,8 @@
                             if (!newGame) {
                                 //failure
                             }
-                            myGames.push(newGame);
-                            populateTabBar(myGames);
-                            showGame();
+                            //myGames.push(newGame);
+                            populateTabBar();
                         });
                     } else {
                         rejectChallenge(challenge, function(rejectedChallenge) {
@@ -167,8 +155,7 @@
                 if (challenge) {
                     alert('User ' + challenge.target + ' has accepted your challenge!');
                     // TODO update games list
-                    populateTabBar(myGames);
-                    showGame();
+                    populateTabBar();
                 }
             });
 
@@ -183,19 +170,44 @@
         
     }
 
-    function populateTabBar(games) {
+    function populateTabBar() {
+        // refresh games list
+        getGames(function (games) {
+            myGames = {};
+            games.forEach(function (game) {
+                myGames[game.id] = game;
+            });
+        });
+
         var $tabBar = $('#tabBar');
-        $tabBar.empty();
-        games.forEach(function (game) {
+        var selectedId = $tabBar.find('.tabControl.selected').attr('id');
+
+        // clear all but matchmaker
+        $tabBar.find('*').not('#matchmakerTabControl').remove();
+
+        // populate tabs from games list
+        for (id in myGames) {
+            var game = myGames[id];
             var opponent;
-            if (game.naughtsPlayer === currentUser) {
+            if (game.naughtsPlayer === currentUser.nickname) {
                 opponent = game.crossesPlayer;
             } else {
                 opponent = game.naughtsPlayer;
             }
             var $newTab = $('<div class="tabControl">').text(opponent).attr('id', 'tabControl-' + game.id);
-            $newTab.click(function(){alert(this.id.split('-')[1])});
             $tabBar.append($newTab);
+        }
+        //reselect once-selected id, or matchmaker if missing
+        var $selected = $tabBar.find('#'+selectedId);
+        if ($selected.length > 0) {
+            $selected.addClass('selected');
+        } else {
+            $('#matchmakerTabControl').addClass('selected');
+        }
+
+
+        $('.tabControl').click(function (){
+            showGameTab($(this).index());
         });
     }
 
@@ -221,34 +233,34 @@
             }
         });
         $('#newNickField').focus();
-        $('#matchmakerContainer').hide();
         $('#playButton').unbind();
         $('#gameContainer').hide();
         clearInterval(updateInterval);
     }
 
-    function showMatchmaker() {
+    function showGameTab(i) {
+        $('.gameTab').hide();
+        $('.gameTab').eq(i).show();
+        $('.tabControl').removeClass('selected')
+        $('.tabControl').eq(i).addClass('selected')
+    }
+
+    function showTabs() {
         $('#signInContainer').hide();
         $('#submitNickButton').unbind();
         $('#newNickField').unbind();
-        $('#usernameGreetSpan').text(currentUser);
-        $('#matchmakerContainer').show();
+        $('#usernameGreetSpan').text(currentUser.nickname);
         $('#playButton').click(issueChallenge);
-        $('#gameContainer').hide();
+        $('#gameTabsContainer').show();
 
+        showGameTab(0);
+        populateTabBar();
         populateMatchmaker();
         clearInterval(updateInterval);
-        updateInterval = setInterval(populateMatchmaker, 2000);
-    }
-
-    function showGame(tabNumber) {
-        $('#signInContainer').hide();
-        $('#submitNickButton').unbind();
-        $('#newNickField').unbind();
-        $('#matchmakerContainer').hide();
-        $('#playButton').unbind();
-        $('#gameContainer').show();
-        clearInterval(updateInterval);
+        updateInterval = setInterval(function () {
+            populateTabBar();
+            populateMatchmaker();
+        }, 3000);
     }
 
 	$(document).ready(function() {
@@ -258,7 +270,7 @@
                 showSignIn();
             } else {
                 currentUser = user;
-                showMatchmaker();
+                showTabs();
             }
         });
 	});

@@ -18,11 +18,13 @@ body {
 	display: none;
 }
 
-#matchmakerContainer {
+#gameTabsContainer {
 	width: 98%;
-	height: 98%;
+	height: 90%;
 	text-align: center;
 	display: none;
+	background-color: rgb(20, 20, 20);
+	margin: 20px auto;
 }
 
 #usernameGreetSpan {
@@ -31,7 +33,7 @@ body {
 }
 
 #tabBar {
-
+	border-collapse: collapse;
 }
 
 .tabControl {
@@ -39,10 +41,16 @@ body {
 	border-top: thin solid gray;
 	border-left: thin solid gray;
 	cursor: pointer;
+	background-color: rgb(50, 50, 50);
+}
+
+.tabControl.selected {
+	text-decoration: underline;
+	background-color: rgb(100, 100, 100);
 }
 
 .tabControl:hover {
-	background-color: rgba(100, 100, 100, 100);
+	background-color: rgb(180, 180, 180);
 }
 
 .gameContainer {

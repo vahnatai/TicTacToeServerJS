@@ -209,7 +209,7 @@ requirejs(
 	        	games[game.id] = game;
                 result.gameId = game.id;
 	        }
-        	response.setHeader('content-type', 'application/json');
+    	    response.setHeader('content-type', 'application/json');
 		    response.end(JSON.stringify(game));
         });
     }
@@ -246,14 +246,43 @@ requirejs(
     function request_getGames(request, response) {
         var myGames = [];
         var user = getCurrentUser(request);
-        for (id in games) {
-            var game = games[id];
-            if (game && game.hasPlayer(user.nickname)) {
-                myGames.push(game);
+        if (user) {
+            for (id in games) {
+                var game = games[id];
+                if (game && game.hasPlayer(user.nickname)) {
+                    myGames.push(game);
+                }
             }
         }
         response.setHeader('content-type', 'application/json');
         response.end(JSON.stringify(myGames));
+    }
+
+    function request_makeMove(request, response) {
+        var body = '';
+        request.on('data', function(data) {
+            body += data;
+        });
+        request.on('end', function() {
+            var data = JSON.parse(body);
+            var user = getCurrentUser(request);
+            var result = null;
+
+            var game = games[data.gameId];
+            if (game) {
+                try {
+                    game.play(user.nickname, data.column, data.row);
+                    result = game;
+                } catch (exception) {
+                    console.error('Error making move: ' + exception);
+                }
+            } else {
+                console.error('Error making move: game does not exist with ID ' + data.gameid);
+            }
+
+            response.setHeader('content-type', 'application/json');
+            response.end(JSON.stringify(result));
+        });
     }
 
     var cgiResolver = {
@@ -264,7 +293,8 @@ requirejs(
         '/cgi/getChallenges': request_getChallenges,
         '/cgi/acceptChallenge': request_acceptChallenge,
         '/cgi/rejectChallenge': request_rejectChallenge,
-        '/cgi/getGames': request_getGames
+        '/cgi/getGames': request_getGames,
+        '/cgi/makeMove': request_makeMove
     };
 
     var ONE_HOUR = 60 * 60 * 1000;

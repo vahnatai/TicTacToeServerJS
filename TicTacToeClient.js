@@ -1,8 +1,11 @@
 //(function() {
     var currentUser;
-    var currentGame;
+    var currentGameId;
     var myGames = [];
     var updateInterval;
+
+    var xImgURL = './x.png';
+    var oImgURL = './o.png';
     
 	/**
 	 *	Via AJAX, get the current user for this address, if exists.
@@ -96,6 +99,21 @@
         });
     }
 
+    function makeMove(gameId, column, row, successCallback) {
+        $.ajax({
+            type: 'POST',
+            url: './cgi/makeMove',
+            dataType: 'json',
+            data: JSON.stringify({
+                gameId: gameId,
+                column: column,
+                row: row
+            }),
+            success: successCallback,
+            error: console.error
+        });
+    }
+
     function submitNickname() {
         if (currentUser) {
             throw 'Current user already defined.';
@@ -137,7 +155,6 @@
                             if (!newGame) {
                                 //failure
                             }
-                            //myGames.push(newGame);
                             populateTabBar();
                         });
                     } else {
@@ -177,37 +194,45 @@
             games.forEach(function (game) {
                 myGames[game.id] = game;
             });
-        });
 
-        var $tabBar = $('#tabBar');
-        var selectedId = $tabBar.find('.tabControl.selected').attr('id');
+            var $tabBar = $('#tabBar');
+            var $gamesContainer = $("#gamesContainer");
+            var selectedId = $tabBar.find('.tabControl.selected').attr('id');
+            var selectedTabIndex = $tabBar.find('.tabControl.selected').index();
 
-        // clear all but matchmaker
-        $tabBar.find('*').not('#matchmakerTabControl').remove();
+            // clear all but matchmaker
+            $tabBar.children().not('#matchmakerTabControl').remove();
+            $gamesContainer.children().not('#matchmakerTab').remove();
 
-        // populate tabs from games list
-        for (id in myGames) {
-            var game = myGames[id];
-            var opponent;
-            if (game.naughtsPlayer === currentUser.nickname) {
-                opponent = game.crossesPlayer;
-            } else {
-                opponent = game.naughtsPlayer;
+            // populate tabs and tab panels from games list
+            for (id in myGames) {
+                var game = myGames[id];
+                var opponent;
+                if (game.naughtsPlayer === currentUser.nickname) {
+                    opponent = game.crossesPlayer;
+                } else {
+                    opponent = game.naughtsPlayer;
+                }
+                var $gameTab = $('<div>').addClass('tabControl').text(opponent).attr('id', 'tabControl-' + game.id);
+                $tabBar.append($gameTab);
+                var $gameTabPanel = $('<div>').addClass('gameTab').attr('id', 'gameTab-' + game.id);
+                var $gameContainer = $('<div>').addClass('gameContainer').attr('id', 'gameContainer-' + game.id);
+                $gameTabPanel.append($gameContainer);
+                $gamesContainer.append($gameTabPanel);
             }
-            var $newTab = $('<div class="tabControl">').text(opponent).attr('id', 'tabControl-' + game.id);
-            $tabBar.append($newTab);
-        }
-        //reselect once-selected id, or matchmaker if missing
-        var $selected = $tabBar.find('#'+selectedId);
-        if ($selected.length > 0) {
-            $selected.addClass('selected');
-        } else {
-            $('#matchmakerTabControl').addClass('selected');
-        }
+            //reselect once-selected id, or matchmaker if missing
+            // var $selected = $tabBar.find('#'+selectedId);
+            // if ($selected.length > 0) {
+            //     $selected.addClass('selected');
+            // } else {
+            //     $('#matchmakerTabControl').addClass('selected');
+            // }
 
 
-        $('.tabControl').click(function (){
-            showGameTab($(this).index());
+            $('.tabControl').click(function (){
+                showGameTab($(this).index());
+            });
+            showGameTab(selectedTabIndex);
         });
     }
 
@@ -216,10 +241,40 @@
         for (row in game.grid) {
             var $row = $('<div class="gameRow">');
             for (col in game.grid[0]) {
-                var $cell = $('<div class="gameCell">').text(game.grid[row][col] || '_');
+                var $cell = $('<div class="gameCell">');
+                var val = game.grid[row][col];
+                renderCell(val, $cell);
                 $row.append($cell);
             }
             $container.append($row);
+        }
+        $('.gameCell').click(function () {
+            //TODO make moves
+            var column = $(this).parent().children().index(this);
+            var row = $(this).parent().parent().children().index($(this).parent());
+            makeMove(currentGameId, column, row, function (game) {
+                if (!game) {
+                    console.error('Make move failed.', currentGameId, column, row);
+                    return;
+                }
+                renderGame(game, $container);
+            });
+        });
+    }
+
+    function renderCell(val, $cell) {
+        var imgURL;
+        if (val === 'x') {
+            imgURL = xImgURL;
+        } else if (val === 'o') {
+            imgURL = oImgURL;
+        }
+        console.warn(val, imgURL);
+        if (imgURL) {
+            var img = new Image();
+            img.src = imgURL;
+            $cell.empty();
+            $cell.append(img);
         }
     }
 
@@ -239,10 +294,23 @@
     }
 
     function showGameTab(i) {
-        $('.gameTab').hide();
-        $('.gameTab').eq(i).show();
         $('.tabControl').removeClass('selected')
         $('.tabControl').eq(i).addClass('selected')
+        $('.gameTab').hide();
+        $('.gameTab').eq(i).show();
+
+        var targetGame = null;
+        var selectedId =  $('.tabControl.selected').attr('id').split('tabControl-')[1];
+        if (selectedId) {
+            currentGameId = selectedId;
+            if (myGames.hasOwnProperty(currentGameId)) {
+                targetGame = myGames[currentGameId];
+                renderGame(targetGame, $('.gameContainer'));
+            } else {
+                console.error('Selected game ' + currentGameId + ' is not in your games list.');
+            }
+        }
+        //console.warn(targetGame);
     }
 
     function showTabs() {

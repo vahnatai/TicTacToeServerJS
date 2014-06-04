@@ -115,15 +115,16 @@ define(function () {
             throw 'Error: player of given move is not playing in this game.';
         }
         if (player !== this.currentPlayer) {
-            throw 'Error: It\'s not ' + player.nickname + '\'s turn!';  
+            throw 'Error: It\'s not ' + player + '\'s turn!';  
         }
-        if (row < 0 || row >= this.grid.length || columns < 0 || columns >= this.grid[row].length) {
+        if (row < 0 || row >= this.grid.length || column < 0 || column >= this.grid[row].length) {
             throw 'Error: coordinates for given move are out of bounds. row: ' + row + ', column: ' + column;
         }
         if (this.grid[row][column]) {
             throw 'Error: coordinates for given move are already marked. row: ' + row + ', column: ' + column + ', value: ' + this.grid[row][column];
         }
-        this.grid[row][column] = (player === this.naughtsPlayer ? 'O' : 'X');
+        this.grid[row][column] = (player === this.naughtsPlayer ? 'o' : 'x');
+        console.log(this);
     }
     Game.prototype.hasPlayer = function hasPlayer(username) {
         return (this.naughtsPlayer === username || this.crossesPlayer === username);

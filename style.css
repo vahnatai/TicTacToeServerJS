@@ -11,14 +11,7 @@ body {
 	color: #FFFFFF;
 }
 
-#signInContainer {
-	width: 98%;
-	height: 98%;
-	text-align: center;
-	display: none;
-}
-
-#gameTabsContainer {
+#signInContainer, #gameTabsContainer {
 	width: 98%;
 	height: 90%;
 	text-align: center;
@@ -53,9 +46,15 @@ body {
 	background-color: rgb(180, 180, 180);
 }
 
+#gamesContainer {
+	width: 100%;
+	height: 100%;
+}
+
 .gameContainer {
-	width: 98%;
-	height: 98%;
+	width: 99%;
+	height: 99%;
+	margin: 0 auto;
 	display: table;
 	border-collapse: collapse;
 }

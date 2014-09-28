@@ -124,6 +124,7 @@ define(function () {
             throw 'Error: coordinates for given move are already marked. row: ' + row + ', column: ' + column + ', value: ' + this.grid[row][column];
         }
         this.grid[row][column] = (player === this.naughtsPlayer ? 'o' : 'x');
+        this.currentPlayer = (this.currentPlayer == this.naughtsPlayer) ? this.crossesPlayer: this.naughtsPlayer;
         console.log(this);
     }
     Game.prototype.hasPlayer = function hasPlayer(username) {

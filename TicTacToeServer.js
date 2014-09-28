@@ -271,7 +271,7 @@ requirejs(
             var game = games[data.gameId];
             if (game) {
                 try {
-                    game.play(user.nickname, data.column, data.row);
+                    game.play(user.nickname, data.row, data.column);
                     result = game;
                 } catch (exception) {
                     console.error('Error making move: ' + exception);

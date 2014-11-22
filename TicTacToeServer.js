@@ -4,10 +4,11 @@ requirejs.config({
     nodeRequire: require
 });
 requirejs(
-    ['http', 'path', 'url', 'fs', 'querystring', 'connect', './tictactoe.js'],
-    function(http, path, url, fs, querystring, connect, tictactoe) {
+    ['http', 'path', 'url', 'fs', 'querystring', 'connect', 'uuid', './tictactoe.js'],
+    function(http, path, url, fs, querystring, connect, uuid, tictactoe) {
 	
     var users = {}; // {nick: user}
+    var sessions = {}; // {username: [sessions]}
     var challenges = [];
     var rejectedChallenges = [];
     var acceptedChallenges = [];
@@ -50,13 +51,20 @@ requirejs(
     }
     
     function saveUsers() {
-        fs.writeFile('./users.json', JSON.stringify(users, null, 4), function(error) {
+        var spaces = 4;
+        fs.writeFile('./users.json', JSON.stringify(users, null, spaces), function(error) {
             if (error) {
                 console.error('I/O error: ', error);
             }
         });
     }
     
+    /**
+     *  Get a game the given user is a player in, by id.
+     *
+     *  @returns    null if the game does not exist or the
+     *              user is not a player in that game
+     */
     function getPlayerGame(user, gameId) {
         var game = games[gameId];
         if (!user || !game.hasPlayer(user.nickname)) {

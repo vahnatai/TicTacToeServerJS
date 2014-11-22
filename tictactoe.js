@@ -165,6 +165,15 @@ define(function () {
     }
     tictactoe.model.Challenge = Challenge;
 
+    /**
+     *  Implements one of a user's sessions.
+     */
+    function Session(user) {
+        this.id = Session.generateId();
+        this.user = user;
+    }
+    Session.generateId = uuid.v4;
+    tictactoe.model.Session = Session;
 
     return tictactoe;
 });
